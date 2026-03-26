@@ -1,33 +1,56 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, ExternalLink, Search, Loader2, Gamepad2 } from 'lucide-react';
 
+import { Language } from '../App';
+
 interface StoreProps {
   apiKey: string;
+  language: Language;
 }
 
-export default function Store({ apiKey: _apiKey }: StoreProps) {
+export default function Store({ apiKey: _apiKey, language }: StoreProps) {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const isKo = navigator.language.startsWith('ko');
+  const isKo = language === 'ko';
+  const isId = language === 'id';
 
-  const formatCurrency = (amount: number, currencyCode: string = 'USD') => {
-    if (amount === 0 || amount === null) return isKo ? '무료' : 'Free';
+  const tFree = isKo ? '무료' : isId ? 'Gratis' : 'Free';
+  const tDiscover = isKo ? '새로운 게임 탐색' : isId ? 'TEMUKAN GAME' : 'DISCOVER GAMES';
+  const tSearch = isKo ? '게임 검색...' : isId ? 'Cari game...' : 'Search games...';
+  const tLoading = isKo ? '게임 불러오는 중...' : isId ? 'Memuat game terbaik...' : 'Loading amazing games...';
+  const tRetry = isKo ? '다시 연결' : isId ? 'Coba Lagi' : 'Retry Connection';
+  const tF2p = isKo ? '무료 플레이' : isId ? 'MAIN GRATIS' : 'FREE TO PLAY';
+  const tPremium = isKo ? '프리미엄' : isId ? 'PREMIUM' : 'PREMIUM';
+  const tNoDesc = isKo ? '이 게임에 대한 설명이 없습니다.' : isId ? 'Tidak ada deskripsi yang tersedia.' : 'No description available for this awesome game.';
+  const tBrowser = isKo ? '브라우저에서 실행' : isId ? 'Main di Browser' : 'Get in Browser';
+  const tPurchase = isKo ? '구매하기' : isId ? 'Beli' : 'Purchase';
+
+  const formatCurrency = (amountInKrw: number, currencyCode: string = 'USD') => {
+    if (amountInKrw === 0 || amountInKrw === null) return tFree;
     
-    if (isKo && currencyCode === 'USD') {
-      const krw = amount * 1450;
+    // Convert native KRW price exactly like Web Platform
+    if (language === 'en') {
+      const usd = amountInKrw / 1450;
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(usd);
+    } else if (language === 'id') {
+      const idr = (amountInKrw / 1450) * 16500;
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0
+      }).format(idr);
+    } else {
       return new Intl.NumberFormat('ko-KR', {
         style: 'currency',
         currency: 'KRW',
         maximumFractionDigits: 0
-      }).format(krw);
-    } else {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(amount);
+      }).format(amountInKrw);
     }
   };
 
@@ -74,14 +97,14 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
       <div className="h-20 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md flex items-center justify-between px-8 flex-shrink-0">
         <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
           <ShoppingCart className="text-blue-500" />
-          {isKo ? '새로운 게임 탐색' : 'DISCOVER GAMES'}
+          {tDiscover}
         </h2>
         
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input 
             type="text" 
-            placeholder={isKo ? '게임 검색...' : 'Search games...'} 
+            placeholder={tSearch} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-950/80 border border-gray-800 text-sm rounded-full pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200 placeholder-gray-500 transition-all"
@@ -94,7 +117,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <Loader2 className="w-12 h-12 animate-spin mb-4 text-blue-500" />
-            <p className="font-medium animate-pulse">{isKo ? '게임 불러오는 중...' : 'Loading amazing games...'}</p>
+            <p className="font-medium animate-pulse">{tLoading}</p>
           </div>
         ) : error ? (
           <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-2xl flex flex-col items-center justify-center max-w-lg mx-auto mt-20">
@@ -103,7 +126,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
             </div>
             <p className="text-red-400 font-medium mb-4 text-center">{error}</p>
             <button onClick={fetchGames} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium">
-              {isKo ? '다시 연결' : 'Retry Connection'}
+              {tRetry}
             </button>
           </div>
         ) : (
@@ -127,11 +150,11 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
                   )}
                   {game.price === 0 || game.price === null ? (
                     <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-md">
-                      {isKo ? '무료 플레이' : 'FREE TO PLAY'}
+                      {tF2p}
                     </div>
                   ) : (
                     <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
-                      {isKo ? '프리미엄' : 'PREMIUM'}
+                      {tPremium}
                     </div>
                   )}
                   
@@ -150,7 +173,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
                 
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{game.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{game.description || (isKo ? '이 게임에 대한 설명이 없습니다.' : 'No description available for this awesome game.')}</p>
+                  <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{game.description || tNoDesc}</p>
                   
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/80">
                     <div className="text-sm">
@@ -163,7 +186,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
                       onClick={() => handlePurchase(game.id)}
                       className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
                     >
-                      <span>{game.price === 0 || game.price === null ? (isKo ? '브라우저에서 실행' : 'Get in Browser') : (isKo ? '구매하기' : 'Purchase')}</span>
+                      <span>{game.price === 0 || game.price === null ? tBrowser : tPurchase}</span>
                       <ExternalLink size={14} />
                     </button>
                   </div>

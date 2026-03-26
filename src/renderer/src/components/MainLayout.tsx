@@ -2,26 +2,40 @@ import { useState, useEffect } from 'react';
 import Library from './Library';
 import Store from './Store';
 import { LogOut, Gamepad2, ShoppingCart, RefreshCw } from 'lucide-react';
+import { Language } from '../App';
 
 interface MainLayoutProps {
   apiKey: string;
   userName: string;
   onLogout: () => void;
+  language: Language;
+  onLangChange: (lang: Language) => void;
 }
 
-export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutProps) {
+export default function MainLayout({ apiKey, userName, onLogout, language, onLangChange }: MainLayoutProps) {
   const [activeTab, setActiveTab] = useState<'store' | 'library'>('store');
   const [appVersion, setAppVersion] = useState<string>('...');
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  const isKo = navigator.language.startsWith('ko');
+  const isKo = language === 'ko';
+  const isId = language === 'id';
+
+  const tStore = isKo ? '상점' : isId ? 'Toko' : 'Store';
+  const tLibrary = isKo ? '내 게임' : isId ? 'Pustaka' : 'Library';
+  const tSignOut = isKo ? '로그아웃' : isId ? 'Keluar' : 'Sign Out';
 
   useEffect(() => {
     // Get version
     window.electron.ipcRenderer.invoke('get-app-version').then((v: string) => setAppVersion(v));
 
     // Listen to updates
-    window.electron.ipcRenderer.on('update-status', (_, msg) => setUpdateMsg(msg));
+    window.electron.ipcRenderer.on('update-status', (_, msg) => {
+      setUpdateMsg(msg);
+      if (msg === 'Update Ready!') {
+        setShowUpdateModal(true);
+      }
+    });
     window.electron.ipcRenderer.on('update-progress', (_, percent) => {
       setUpdateMsg(`Downloading Update... ${Math.round(percent)}%`);
     });
@@ -57,7 +71,7 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             }`}
           >
             <ShoppingCart size={20} className={activeTab === 'store' ? 'text-white' : ''} />
-            <span>{isKo ? '상점' : 'Store'}</span>
+            <span>{tStore}</span>
           </button>
 
           <button
@@ -69,7 +83,7 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             }`}
           >
             <Gamepad2 size={20} className={activeTab === 'library' ? 'text-white' : ''} />
-            <span>{isKo ? '내 게임' : 'Library'}</span>
+            <span>{tLibrary}</span>
           </button>
         </nav>
         
@@ -90,24 +104,58 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
               <p className="text-[11px] font-bold text-blue-300 leading-tight">{updateMsg}</p>
             </div>
           )}
+
+          <div className="flex gap-2 mb-4 px-2">
+             <button onClick={() => onLangChange('ko')} className={`flex-1 py-1 rounded text-[11px] px-1 ${language === 'ko' ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'bg-gray-800/80 text-gray-400 hover:text-white'}`}>한국어</button>
+             <button onClick={() => onLangChange('en')} className={`flex-1 py-1 rounded text-[11px] px-1 ${language === 'en' ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'bg-gray-800/80 text-gray-400 hover:text-white'}`}>EN</button>
+             <button onClick={() => onLangChange('id')} className={`flex-1 py-1 rounded text-[11px] px-1 ${language === 'id' ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'bg-gray-800/80 text-gray-400 hover:text-white'}`}>ID</button>
+          </div>
           
           <button 
             onClick={onLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 border border-transparent rounded-lg transition-all"
           >
             <LogOut size={16} />
-            <span>{isKo ? '로그아웃' : 'Sign Out'}</span>
+            <span>{tSignOut}</span>
           </button>
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 bg-[#0b0c10] relative flex overflow-hidden">
+        {showUpdateModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-gray-900 border border-blue-500/50 p-7 rounded-2xl w-full max-w-sm flex flex-col items-center shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 mb-4 animate-bounce text-2xl">🚀</div>
+              <h2 className="text-xl font-bold mb-2 text-white">{isKo ? '업데이트 준비 완료!' : isId ? 'Pembaruan Siap!' : 'Update Ready!'}</h2>
+              <p className="text-gray-400 text-center text-sm mb-6 leading-relaxed">
+                {isKo ? '새로운 버전의 런처가 다운로드되었습니다. 지금 재시작하여 적용하시겠습니까?' : 
+                 isId ? 'Versi baru telah diunduh. Mulai ulang sekarang untuk menerapkan pembaruan?' : 
+                 'A new version of the launcher has been downloaded. Restart now to apply the updates?'}
+              </p>
+              <div className="flex w-full gap-3">
+                <button 
+                  onClick={() => setShowUpdateModal(false)} 
+                  className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-400 font-bold hover:bg-gray-700 hover:text-white transition-all"
+                >
+                  {isKo ? '나중에' : isId ? 'Nanti' : 'Later'}
+                </button>
+                <button 
+                  onClick={() => window.electron.ipcRenderer.send('install-update')} 
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/30"
+                >
+                  {isKo ? '재시작' : isId ? 'Mulai Ulang' : 'Restart'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Ambient glow in main area */}
         <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[600px] h-[500px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         
-        {activeTab === 'store' ? <Store apiKey={apiKey} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded />}
+        {activeTab === 'store' ? <Store apiKey={apiKey} language={language} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded language={language} />}
       </div>
     </div>
   );

@@ -76,21 +76,17 @@ app.on('open-url', (event: any, url: string) => {
 });
 
 function createWindow(): void {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
-    show: false,
+    show: true,
+    backgroundColor: '#0b0c10',
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     }
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    if (mainWindow) mainWindow.show();
   })
 
   if (mainWindow) {
@@ -150,18 +146,10 @@ app.whenReady().then(() => {
   
   autoUpdater.on('update-downloaded', async () => {
     if (mainWindow) mainWindow.webContents.send('update-status', 'Update Ready!');
-    
-    const { dialog } = require('electron');
-    const result = await dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      buttons: ['지금 재시작 (Restart Now)', '나중에 (Later)'],
-      title: 'Update Ready',
-      message: '새로운 런처 버전이 다운로드되었습니다. 업데이트를 적용하기 위해 지금 재시작하시겠습니까?\n\nA new version has been downloaded. Restart the application to apply the updates?',
-    });
-    
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall();
-    }
+  });
+  
+  ipcMain.on('install-update', () => {
+    autoUpdater.quitAndInstall();
   });
 
   // Secure Game Launcher IPC

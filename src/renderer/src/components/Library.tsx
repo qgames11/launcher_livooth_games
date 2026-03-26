@@ -11,20 +11,35 @@ interface Game {
   url?: string;
 }
 
+import { Language } from '../App';
+
 interface LibraryProps {
   apiKey: string;
   userName: string;
   onLogout: () => void;
   isEmbedded?: boolean;
+  language?: Language;
 }
 
 // Removed mockGames. Games will be fetched from the backend.
 
-export default function Library({ apiKey, userName, onLogout, isEmbedded }: LibraryProps) {
+export default function Library({ apiKey, userName, onLogout, isEmbedded, language = 'ko' }: LibraryProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isKo = navigator.language.startsWith('ko');
+  const isKo = language === 'ko';
+  const isId = language === 'id';
+
+  const tLibraryTitle = isKo ? '내 게임' : isId ? 'Pustaka' : 'Library';
+  const tAllGames = isKo ? '모든 게임' : isId ? 'Semua Game' : 'All Games';
+  const tInstalled = isKo ? '설치됨' : isId ? 'Terinstal' : 'Installed';
+  const tLoadingMsg = isKo ? '라이브러리 불러오는 중...' : isId ? 'Memuat pustaka...' : 'Loading library...';
+  const tEmptyLib = isKo ? '라이브러리가 비어 있습니다.' : isId ? 'Pustaka Anda kosong.' : 'Your library is empty.';
+  const tBuyHint = isKo ? '웹사이트 상점에서 게임을 구매하면 여기에 즉시 표시됩니다.' : isId ? 'Beli game di toko situs web untuk melihatnya di sini.' : 'Purchase a game on the website to see it here.';
+  const tDownloading = isKo ? '다운로드 중...' : isId ? 'Mengunduh...' : 'Downloading...';
+  const tPlay = isKo ? '실행' : isId ? 'Main' : 'Play';
+  const tInstall = isKo ? '설치' : isId ? 'Instal' : 'Install';
+  const tInstalling = isKo ? '설치 중...' : isId ? 'Menginstal...' : 'Installing...';
 
   // Always use production server
   const API_URL = 'https://livoothgames-production.up.railway.app';
@@ -60,12 +75,12 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
 
     window.api.onDownloadComplete((gameId) => {
       setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'installed', progress: undefined } : g));
-      alert(isKo ? `${gameId} 설치가 성공적으로 완료되었습니다!` : `Game ${gameId} successfully installed!`);
+      alert(isKo ? `${gameId} 설치가 성공적으로 완료되었습니다!` : isId ? `${gameId} berhasil diinstal!` : `Game ${gameId} successfully installed!`);
     });
 
     window.api.onDownloadError(({ gameId, error }) => {
       setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'uninstalled', progress: undefined } : g));
-      alert(isKo ? `${gameId} 다운로드 오류: ${error}` : `Download Error for ${gameId}: ${error}`);
+      alert(isKo ? `${gameId} 다운로드 오류: ${error}` : isId ? `Kesalahan unduhan untuk ${gameId}: ${error}` : `Download Error for ${gameId}: ${error}`);
     });
   }, []);
 
@@ -82,7 +97,9 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
            }
         } else if (!loading && games.length > 0) {
            // If apps loaded but game not found in library
-           alert(isKo ? `라이브러리에서 ${args.gameId} 게임을 찾을 수 없습니다. 구매했는지 확인하세요.` : `Game ${args.gameId} not found in your library. Please make sure you own it.`);
+           alert(isKo ? `라이브러리에서 ${args.gameId} 게임을 찾을 수 없습니다. 구매했는지 확인하세요.` : 
+                 isId ? `Game ${args.gameId} tidak ditemukan di pustaka Anda. Pastikan Anda memilikinya.` : 
+                 `Game ${args.gameId} not found in your library. Please make sure you own it.`);
         }
       }
     });
@@ -142,13 +159,13 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
         </div>
         
         <div className="px-4 flex-1">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">{isKo ? '내 게임' : 'Library'}</h3>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">{tLibraryTitle}</h3>
           <ul className="space-y-1">
             <li className="bg-gray-800/50 text-blue-400 px-3 py-2 rounded-lg cursor-pointer font-medium text-sm border-l-2 border-blue-500 transition-all">
-              {isKo ? '모든 게임' : 'All Games'}
+              {tAllGames}
             </li>
             <li className="text-gray-400 hover:text-gray-200 hover:bg-gray-800/30 px-3 py-2 rounded-lg cursor-pointer font-medium text-sm transition-all border-l-2 border-transparent">
-              {isKo ? '설치됨' : 'Installed'}
+              {tInstalled}
             </li>
           </ul>
         </div>
@@ -177,7 +194,7 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full">
         {/* Header */}
         <header className="h-16 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm flex items-center px-8 shrink-0">
-          <h1 className="text-xl font-bold">{isKo ? '내 게임' : 'My Games'}</h1>
+          <h1 className="text-xl font-bold">{tLibraryTitle}</h1>
         </header>
 
         {/* Grid */}
@@ -185,13 +202,13 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
           {loading ? (
              <div className="flex items-center justify-center h-full w-full flex-1">
                <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
-               <span className="ml-3 text-gray-400">{isKo ? '라이브러리 불러오는 중...' : 'Loading library...'}</span>
+               <span className="ml-3 text-gray-400">{tLoadingMsg}</span>
              </div>
           ) : games.length === 0 ? (
              <div className="flex flex-col items-center justify-center h-full w-full flex-1 text-gray-500">
                <div className="text-4xl mb-4">🎮</div>
-               <p>{isKo ? '라이브러리가 비어 있습니다.' : 'Your library is empty.'}</p>
-               <p className="text-sm">{isKo ? '웹사이트 상점에서 게임을 구매하면 여기에 즉시 표시됩니다.' : 'Purchase a game on the website to see it here.'}</p>
+               <p>{tEmptyLib}</p>
+               <p className="text-sm">{tBuyHint}</p>
              </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -203,7 +220,7 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4">
                       <div className="w-full max-w-xs">
                         <div className="flex justify-between text-xs mb-2 text-white">
-                          <span>{isKo ? '다운로드 중...' : 'Downloading...'}</span>
+                          <span>{tDownloading}</span>
                           <span>{game.progress}%</span>
                         </div>
                         <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
@@ -222,21 +239,21 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded }: Libr
                       onClick={() => handleAction(game.id, 'play', game.type, game.url)}
                       className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-blue-600/20"
                     >
-                      {isKo ? '실행' : 'Play'}
+                      {tPlay}
                     </button>
                   ) : game.status === 'uninstalled' ? (
                     <button 
                       onClick={() => handleAction(game.id, 'install')}
                       className="w-full py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold rounded-lg transition-colors border border-gray-700 hover:border-gray-600"
                     >
-                      {isKo ? '설치' : 'Install'}
+                      {tInstall}
                     </button>
                   ) : (
                     <button 
                       disabled
                       className="w-full py-2 bg-gray-800 text-gray-500 font-semibold rounded-lg border border-gray-800 cursor-not-allowed"
                     >
-                      {isKo ? '설치 중...' : 'Installing...'}
+                      {tInstalling}
                     </button>
                   )}
                 </div>
