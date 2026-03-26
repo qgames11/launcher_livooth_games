@@ -1,6 +1,6 @@
 {
   "name": "livooth-games-launcher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Livooth Games Official Desktop Launcher",
   "main": "./out/main/index.js",
   "author": "example.com",
