@@ -136,6 +136,24 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  
+  // App Version & Updater IPC
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
+  autoUpdater.on('update-available', () => {
+    if (mainWindow) mainWindow.webContents.send('update-status', 'Update Available! Downloading...');
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    if (mainWindow) mainWindow.webContents.send('update-progress', progressObj.percent);
+  });
+  
+  autoUpdater.on('update-downloaded', () => {
+    if (mainWindow) mainWindow.webContents.send('update-status', 'Update Ready! Restarting in 3s...');
+    setTimeout(() => {
+      autoUpdater.quitAndInstall();
+    }, 3000);
+  });
 
   // Secure Game Launcher IPC
   ipcMain.on('launch-game', (event: any, args: any) => {

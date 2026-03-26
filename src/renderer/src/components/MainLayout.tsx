@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Library from './Library';
 import Store from './Store';
-import { LogOut, Gamepad2, ShoppingCart } from 'lucide-react';
+import { LogOut, Gamepad2, ShoppingCart, RefreshCw } from 'lucide-react';
 
 interface MainLayoutProps {
   apiKey: string;
@@ -10,7 +10,25 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutProps) {
-  const [activeTab, setActiveTab] = useState<'store' | 'library'>('library');
+  const [activeTab, setActiveTab] = useState<'store' | 'library'>('store');
+  const [appVersion, setAppVersion] = useState<string>('...');
+  const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get version
+    window.electron.ipcRenderer.invoke('get-app-version').then((v: string) => setAppVersion(v));
+
+    // Listen to updates
+    window.electron.ipcRenderer.on('update-status', (_, msg) => setUpdateMsg(msg));
+    window.electron.ipcRenderer.on('update-progress', (_, percent) => {
+      setUpdateMsg(`Downloading Update... ${Math.round(percent)}%`);
+    });
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners('update-status');
+      window.electron.ipcRenderer.removeAllListeners('update-progress');
+    };
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
@@ -60,9 +78,16 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-white truncate">{userName}</p>
-              <p className="text-xs text-green-400 font-medium">● Online</p>
+              <p className="text-xs text-green-400 font-medium">● Online <span className="text-gray-500 font-normal ml-1">v{appVersion}</span></p>
             </div>
           </div>
+          
+          {updateMsg && (
+            <div className="mb-4 px-3 py-2 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center gap-2">
+              <RefreshCw size={14} className="text-blue-400 animate-spin flex-shrink-0" />
+              <p className="text-[11px] font-bold text-blue-300 leading-tight">{updateMsg}</p>
+            </div>
+          )}
           
           <button 
             onClick={onLogout}
