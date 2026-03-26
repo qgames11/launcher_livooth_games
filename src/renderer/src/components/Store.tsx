@@ -15,11 +15,20 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
 
   const formatCurrency = (amount: number, currencyCode: string = 'USD') => {
     if (amount === 0 || amount === null) return isKo ? '무료' : 'Free';
-    return new Intl.NumberFormat(isKo ? 'ko-KR' : 'en-US', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: currencyCode === 'KRW' ? 0 : 2,
-    }).format(amount);
+    
+    if (isKo && currencyCode === 'USD') {
+      const krw = amount * 1450;
+      return new Intl.NumberFormat('ko-KR', {
+        style: 'currency',
+        currency: 'KRW',
+        maximumFractionDigits: 0
+      }).format(krw);
+    } else {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(amount);
+    }
   };
 
   const SUPABASE_URL = 'https://osxvjqlrzizwvuorjodg.supabase.co';
