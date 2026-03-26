@@ -5,8 +5,10 @@ import MainLayout from './components/MainLayout';
 export type Language = 'ko' | 'en' | 'id';
 
 function App(): React.JSX.Element {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>('Premium User');
+  const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem('livooth-api-key'));
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('livooth-user-name') || 'Premium User');
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+  const [trueApiKey, setTrueApiKey] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>('ko');
 
   useEffect(() => {
@@ -18,7 +20,33 @@ function App(): React.JSX.Element {
       const isKo = navigator.language.startsWith('ko');
       setLanguage(isKo ? 'ko' : isId ? 'id' : 'en');
     }
-  }, []);
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const checkSubscription = async () => {
+      if (!apiKey) return;
+      try {
+        const res = await fetch(`https://livoothgames-production.up.railway.app/launcher/login?apiKey=${apiKey}`);
+        const data = await res.json();
+        if (data.success) {
+          setUserName(data.name);
+          setIsSubscribed(data.isSubscribed);
+          setTrueApiKey(data.trueApiKey);
+        } else if (data.error === 'Invalid or inactive API Key') {
+          handleLogout(); // Kick user out if API key was revoked
+        }
+      } catch (err) {
+        console.error('Failed to sync auth state', err);
+      }
+    };
+
+    if (apiKey) {
+      checkSubscription(); // Initial check
+      interval = setInterval(checkSubscription, 10000); // Poll every 10 seconds
+    }
+
+    return () => clearInterval(interval);
+  }, [apiKey]);
 
   const handleLangChange = (lang: Language) => {
     setLanguage(lang);
@@ -28,10 +56,14 @@ function App(): React.JSX.Element {
   const handleLogin = (key: string, name: string) => {
     setApiKey(key);
     setUserName(name);
+    localStorage.setItem('livooth-api-key', key);
+    localStorage.setItem('livooth-user-name', name);
   };
 
   const handleLogout = () => {
     setApiKey(null);
+    localStorage.removeItem('livooth-api-key');
+    localStorage.removeItem('livooth-user-name');
   };
 
   return (
@@ -39,7 +71,15 @@ function App(): React.JSX.Element {
       {!apiKey ? (
         <Login onLoginSuccess={handleLogin} />
       ) : (
-        <MainLayout apiKey={apiKey} userName={userName} onLogout={handleLogout} language={language} onLangChange={handleLangChange} />
+        <MainLayout 
+          apiKey={apiKey} 
+          userName={userName} 
+          isSubscribed={isSubscribed}
+          trueApiKey={trueApiKey}
+          onLogout={handleLogout} 
+          language={language} 
+          onLangChange={handleLangChange} 
+        />
       )}
     </>
   );

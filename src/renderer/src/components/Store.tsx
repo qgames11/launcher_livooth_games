@@ -54,32 +54,37 @@ export default function Store({ apiKey: _apiKey, language }: StoreProps) {
     }
   };
 
-  const SUPABASE_URL = 'https://osxvjqlrzizwvuorjodg.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zeHZqcWxyeml6d3Z1b3Jqb2RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNTg3OTgsImV4cCI6MjA3OTYzNDc5OH0.UcU_ErS7UpGoaV2D3AVQqGTznGXVNMATnw3wH7Newxc';
+  const API_URL = 'https://livoothgames-production.up.railway.app';
 
-  useEffect(() => {
-    fetchGames();
-  }, []);
-
-  const fetchGames = async () => {
+  const fetchGames = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/games?select=*`, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      });
-      if (!res.ok) throw new Error('Failed to fetch store games');
+      if (showLoading) setLoading(true);
+      setError(null); // Clear previous errors
+      const res = await fetch(`${API_URL}/launcher/games?apiKey=${apiKey}`);
       const data = await res.json();
-      setGames(data || []);
+      
+      if (res.ok && data.success) {
+        setGames(data.games);
+      } else {
+        console.error('Failed to load games:', data.error);
+        setError(data.error || 'Could not load store');
+        if (data.error === 'Invalid or inactive API Key') {
+          // Handled at App root level via pooling
+        }
+      }
     } catch (err: any) {
-      console.error(err);
+      console.error('Network error loading store', err);
       setError(err.message || 'Could not load store');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchGames(true);
+    const interval = setInterval(() => fetchGames(false), 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, [apiKey]);
 
   const handlePurchase = (gameId: string) => {
     // Open the browser directly to the payment page or game detail page

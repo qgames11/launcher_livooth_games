@@ -7,12 +7,14 @@ import { Language } from '../App';
 interface MainLayoutProps {
   apiKey: string;
   userName: string;
+  isSubscribed: boolean;
+  trueApiKey: string | null;
   onLogout: () => void;
   language: Language;
   onLangChange: (lang: Language) => void;
 }
 
-export default function MainLayout({ apiKey, userName, onLogout, language, onLangChange }: MainLayoutProps) {
+export default function MainLayout({ apiKey, userName, isSubscribed, trueApiKey, onLogout, language, onLangChange }: MainLayoutProps) {
   const [activeTab, setActiveTab] = useState<'store' | 'library'>('store');
   const [appVersion, setAppVersion] = useState<string>('...');
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
@@ -89,14 +91,37 @@ export default function MainLayout({ apiKey, userName, onLogout, language, onLan
         
         <div className="p-4 border-t border-gray-800 relative z-10 bg-gray-900/80">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-lg">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg ${isSubscribed ? 'bg-gradient-to-tr from-purple-500 to-pink-500' : 'bg-gray-700'}`}>
               {userName.charAt(0)}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-bold text-white truncate">{userName}</p>
-              <p className="text-xs text-green-400 font-medium">● Online <span className="text-gray-500 font-normal ml-1">v{appVersion}</span></p>
+              <p className="text-sm font-bold text-white truncate flex items-center gap-1">{userName} {isSubscribed && <span className="text-yellow-400 text-xs">👑</span>}</p>
+              <p className={`text-[10px] font-bold ${isSubscribed ? 'text-green-400' : 'text-gray-400'}`}>
+                {isSubscribed ? '● Premium' : '○ Free Plan'} <span className="text-gray-500 font-normal ml-1">v{appVersion}</span>
+              </p>
             </div>
           </div>
+          
+          {/* Subscription / API Key State */}
+          {isSubscribed && trueApiKey ? (
+             <div className="mb-4 px-2">
+               <div className="flex items-center justify-between bg-black/40 p-2 rounded-lg border border-gray-700/50">
+                  <div className="flex flex-col overflow-hidden mr-2">
+                    <span className="text-[9px] text-gray-500 font-bold mb-0.5">DEV API KEY</span>
+                    <span className="text-xs font-mono text-purple-300 truncate w-24 opacity-80">{trueApiKey.substring(0, 15)}...</span>
+                  </div>
+                  <button onClick={() => { navigator.clipboard.writeText(trueApiKey); alert(isKo ? 'API 키가 복사되었습니다!' : isId ? 'Kunci API disalin!' : 'API Key Copied!'); }} className="text-[10px] font-bold text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-2.5 py-1.5 rounded-md transition-all shadow-md">
+                    {isKo ? '복사' : isId ? 'Salin' : 'Copy'}
+                  </button>
+               </div>
+             </div>
+          ) : !isSubscribed ? (
+             <div className="mb-4 px-2">
+               <button onClick={() => window.open('https://livoothgames.com/profile', '_blank')} className="w-full text-[11px] font-bold bg-gradient-to-r from-pink-600 to-purple-600 text-white py-2.5 rounded-lg shadow-lg shadow-purple-500/20 hover:from-pink-500 hover:to-purple-500 transition-all flex items-center justify-center gap-1.5 group">
+                 <span className="group-hover:rotate-12 transition-transform">👑</span> {isKo ? '프리미엄 혜택 구독하기' : isId ? 'Dapatkan Akses Premium' : 'Get Premium Access'}
+               </button>
+             </div>
+          ) : null}
           
           {updateMsg && (
             <div className="mb-4 px-3 py-2 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center gap-2">
@@ -155,7 +180,7 @@ export default function MainLayout({ apiKey, userName, onLogout, language, onLan
         <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[600px] h-[500px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         
-        {activeTab === 'store' ? <Store apiKey={apiKey} language={language} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded language={language} />}
+        {activeTab === 'store' ? <Store apiKey={apiKey} language={language} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded language={language} isSubscribed={isSubscribed} />}
       </div>
     </div>
   );

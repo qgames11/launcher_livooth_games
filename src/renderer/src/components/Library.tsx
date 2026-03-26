@@ -19,11 +19,12 @@ interface LibraryProps {
   onLogout: () => void;
   isEmbedded?: boolean;
   language?: Language;
+  isSubscribed?: boolean;
 }
 
 // Removed mockGames. Games will be fetched from the backend.
 
-export default function Library({ apiKey, userName, onLogout, isEmbedded, language = 'ko' }: LibraryProps) {
+export default function Library({ apiKey, userName, onLogout, isEmbedded, language = 'ko', isSubscribed = false }: LibraryProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,27 +45,42 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded, langua
   // Always use production server
   const API_URL = 'https://livoothgames-production.up.railway.app';
 
-  // Fetch games from Railway backend
-  useEffect(() => {
-    const fetchLibrary = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_URL}/launcher/library?apiKey=${apiKey}`);
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-          setGames(data.games);
-        } else {
-          console.error('Failed to load library:', data.error);
-        }
-      } catch (err) {
-        console.error('Network error loading library', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const API_URL = 'https://livoothgames-production.up.railway.app';
 
-    fetchLibrary();
+  // Fetch games from Railway backend
+  const fetchLibrary = async (showLoading = true) => {
+    try {
+      if (showLoading && Object.keys(games).length === 0) setLoading(true);
+      const res = await fetch(`${API_URL}/launcher/library?apiKey=${apiKey}`);
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setGames(prevGames => {
+          // Merge progress state from prevGames so we dont lose downloading state during polling
+          const newGames = data.games.map((serverGame: Game) => {
+             const existing = prevGames.find(g => g.id === serverGame.id);
+             return {
+                ...serverGame,
+                progress: existing && existing.status === 'downloading' ? existing.progress : undefined,
+                status: existing && existing.status === 'downloading' ? 'downloading' : serverGame.status
+             };
+          });
+          return newGames;
+        });
+      } else {
+        console.error('Failed to load library:', data.error);
+      }
+    } catch (err) {
+      console.error('Network error loading library', err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLibrary(true);
+    const interval = setInterval(() => fetchLibrary(false), 10000); // 10 second polling
+    return () => clearInterval(interval);
   }, [apiKey]);
 
   useEffect(() => {
@@ -235,12 +251,21 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded, langua
                   <p className="text-sm text-gray-400 mb-4">{game.developer}</p>
                   
                   {game.status === 'installed' ? (
-                    <button 
-                      onClick={() => handleAction(game.id, 'play', game.type, game.url)}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-blue-600/20"
-                    >
-                      {tPlay}
-                    </button>
+                     isSubscribed ? (
+                        <button 
+                          onClick={() => handleAction(game.id, 'play', game.type, game.url)}
+                          className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-blue-600/20"
+                        >
+                          {tPlay}
+                        </button>
+                     ) : (
+                        <button 
+                          onClick={() => window.open('https://livoothgames.com', '_blank')}
+                          className="w-full py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 group"
+                        >
+                          <span className="text-base group-hover:rotate-12 transition-transform">👑</span> {isKo ? '구독 필요' : isId ? 'Butuh Langganan' : 'Subscribe to Play'}
+                        </button>
+                     )
                   ) : game.status === 'uninstalled' ? (
                     <button 
                       onClick={() => handleAction(game.id, 'install')}
