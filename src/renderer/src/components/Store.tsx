@@ -28,7 +28,7 @@ export default function Store({ apiKey: _apiKey, language }: StoreProps) {
   const tBrowser = isKo ? '브라우저에서 실행' : isId ? 'Main di Browser' : 'Get in Browser';
   const tPurchase = isKo ? '구매하기' : isId ? 'Beli' : 'Purchase';
 
-  const formatCurrency = (amountInKrw: number, currencyCode: string = 'USD') => {
+  const formatCurrency = (amountInKrw: number) => {
     if (amountInKrw === 0 || amountInKrw === null) return tFree;
     
     // Convert native KRW price exactly like Web Platform
@@ -178,7 +178,7 @@ export default function Store({ apiKey: _apiKey, language }: StoreProps) {
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/80">
                     <div className="text-sm">
                       <span className={game.price === 0 || game.price === null ? "text-green-400 font-bold text-lg" : "text-white font-bold text-lg"}>
-                        {formatCurrency(game.price, game.currency)}
+                        {formatCurrency(game.price)}
                       </span>
                     </div>
                     
