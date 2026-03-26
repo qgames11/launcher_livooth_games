@@ -148,11 +148,20 @@ app.whenReady().then(() => {
     if (mainWindow) mainWindow.webContents.send('update-progress', progressObj.percent);
   });
   
-  autoUpdater.on('update-downloaded', () => {
-    if (mainWindow) mainWindow.webContents.send('update-status', 'Update Ready! Restarting in 3s...');
-    setTimeout(() => {
+  autoUpdater.on('update-downloaded', async () => {
+    if (mainWindow) mainWindow.webContents.send('update-status', 'Update Ready!');
+    
+    const { dialog } = require('electron');
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      buttons: ['지금 재시작 (Restart Now)', '나중에 (Later)'],
+      title: 'Update Ready',
+      message: '새로운 런처 버전이 다운로드되었습니다. 업데이트를 적용하기 위해 지금 재시작하시겠습니까?\n\nA new version has been downloaded. Restart the application to apply the updates?',
+    });
+    
+    if (result.response === 0) {
       autoUpdater.quitAndInstall();
-    }, 3000);
+    }
   });
 
   // Secure Game Launcher IPC

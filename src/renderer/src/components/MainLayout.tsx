@@ -14,6 +14,8 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
   const [appVersion, setAppVersion] = useState<string>('...');
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
 
+  const isKo = navigator.language.startsWith('ko');
+
   useEffect(() => {
     // Get version
     window.electron.ipcRenderer.invoke('get-app-version').then((v: string) => setAppVersion(v));
@@ -55,7 +57,7 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             }`}
           >
             <ShoppingCart size={20} className={activeTab === 'store' ? 'text-white' : ''} />
-            <span>Store</span>
+            <span>{isKo ? '상점' : 'Store'}</span>
           </button>
 
           <button
@@ -67,7 +69,7 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             }`}
           >
             <Gamepad2 size={20} className={activeTab === 'library' ? 'text-white' : ''} />
-            <span>Library</span>
+            <span>{isKo ? '내 게임' : 'Library'}</span>
           </button>
         </nav>
         
@@ -94,7 +96,7 @@ export default function MainLayout({ apiKey, userName, onLogout }: MainLayoutPro
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 border border-transparent rounded-lg transition-all"
           >
             <LogOut size={16} />
-            <span>Sign Out</span>
+            <span>{isKo ? '로그아웃' : 'Sign Out'}</span>
           </button>
         </div>
       </div>

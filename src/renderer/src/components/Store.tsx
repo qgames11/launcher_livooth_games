@@ -11,6 +11,17 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const isKo = navigator.language.startsWith('ko');
+
+  const formatCurrency = (amount: number, currencyCode: string = 'USD') => {
+    if (amount === 0 || amount === null) return isKo ? '무료' : 'Free';
+    return new Intl.NumberFormat(isKo ? 'ko-KR' : 'en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: currencyCode === 'KRW' ? 0 : 2,
+    }).format(amount);
+  };
+
   const SUPABASE_URL = 'https://osxvjqlrzizwvuorjodg.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zeHZqcWxyeml6d3Z1b3Jqb2RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNTg3OTgsImV4cCI6MjA3OTYzNDc5OH0.UcU_ErS7UpGoaV2D3AVQqGTznGXVNMATnw3wH7Newxc';
 
@@ -54,14 +65,14 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
       <div className="h-20 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md flex items-center justify-between px-8 flex-shrink-0">
         <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
           <ShoppingCart className="text-blue-500" />
-          DISCOVER GAMES
+          {isKo ? '새로운 게임 탐색' : 'DISCOVER GAMES'}
         </h2>
         
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input 
             type="text" 
-            placeholder="Search games..." 
+            placeholder={isKo ? '게임 검색...' : 'Search games...'} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-950/80 border border-gray-800 text-sm rounded-full pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-200 placeholder-gray-500 transition-all"
@@ -74,7 +85,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <Loader2 className="w-12 h-12 animate-spin mb-4 text-blue-500" />
-            <p className="font-medium animate-pulse">Loading amazing games...</p>
+            <p className="font-medium animate-pulse">{isKo ? '게임 불러오는 중...' : 'Loading amazing games...'}</p>
           </div>
         ) : error ? (
           <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-2xl flex flex-col items-center justify-center max-w-lg mx-auto mt-20">
@@ -83,7 +94,7 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
             </div>
             <p className="text-red-400 font-medium mb-4 text-center">{error}</p>
             <button onClick={fetchGames} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium">
-              Retry Connection
+              {isKo ? '다시 연결' : 'Retry Connection'}
             </button>
           </div>
         ) : (
@@ -107,11 +118,11 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
                   )}
                   {game.price === 0 || game.price === null ? (
                     <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-md">
-                      FREE TO PLAY
+                      {isKo ? '무료 플레이' : 'FREE TO PLAY'}
                     </div>
                   ) : (
                     <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
-                      PREMIUM
+                      {isKo ? '프리미엄' : 'PREMIUM'}
                     </div>
                   )}
                   
@@ -130,22 +141,20 @@ export default function Store({ apiKey: _apiKey }: StoreProps) {
                 
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{game.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{game.description || 'No description available for this awesome game.'}</p>
+                  <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">{game.description || (isKo ? '이 게임에 대한 설명이 없습니다.' : 'No description available for this awesome game.')}</p>
                   
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/80">
                     <div className="text-sm">
-                      {game.price === 0 || game.price === null ? (
-                        <span className="text-green-400 font-bold text-lg">Free</span>
-                      ) : (
-                        <span className="text-white font-bold text-lg">${game.price?.toFixed(2) || '9.99'}</span>
-                      )}
+                      <span className={game.price === 0 || game.price === null ? "text-green-400 font-bold text-lg" : "text-white font-bold text-lg"}>
+                        {formatCurrency(game.price, game.currency)}
+                      </span>
                     </div>
                     
                     <button
                       onClick={() => handlePurchase(game.id)}
                       className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
                     >
-                      <span>{game.price === 0 || game.price === null ? 'Get in Browser' : 'Purchase'}</span>
+                      <span>{game.price === 0 || game.price === null ? (isKo ? '브라우저에서 실행' : 'Get in Browser') : (isKo ? '구매하기' : 'Purchase')}</span>
                       <ExternalLink size={14} />
                     </button>
                   </div>
