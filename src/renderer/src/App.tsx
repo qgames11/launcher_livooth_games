@@ -20,6 +20,8 @@ function App(): React.JSX.Element {
       const isKo = navigator.language.startsWith('ko');
       setLanguage(isKo ? 'ko' : isId ? 'id' : 'en');
     }
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
