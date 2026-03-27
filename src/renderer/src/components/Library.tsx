@@ -45,8 +45,6 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded, langua
   // Always use production server
   const API_URL = 'https://livoothgames-production.up.railway.app';
 
-  const API_URL = 'https://livoothgames-production.up.railway.app';
-
   // Fetch games from Railway backend
   const fetchLibrary = async (showLoading = true) => {
     try {

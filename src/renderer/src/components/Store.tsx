@@ -8,7 +8,7 @@ interface StoreProps {
   language: Language;
 }
 
-export default function Store({ apiKey: _apiKey, language }: StoreProps) {
+export default function Store({ apiKey, language }: StoreProps) {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +130,7 @@ export default function Store({ apiKey: _apiKey, language }: StoreProps) {
               <span className="text-2xl">⚠️</span>
             </div>
             <p className="text-red-400 font-medium mb-4 text-center">{error}</p>
-            <button onClick={fetchGames} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium">
+            <button onClick={() => fetchGames(true)} className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium">
               {tRetry}
             </button>
           </div>
