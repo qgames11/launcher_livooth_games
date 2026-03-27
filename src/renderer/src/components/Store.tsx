@@ -142,9 +142,9 @@ export default function Store({ apiKey, language }: StoreProps) {
                 className="group bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:-translate-y-1 flex flex-col"
               >
                 <div className="relative aspect-video overflow-hidden bg-gray-950">
-                  {game.thumbnail ? (
+                  {game.imageUrl ? (
                     <img 
-                      src={game.thumbnail} 
+                      src={game.imageUrl} 
                       alt={game.title} 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                     />
