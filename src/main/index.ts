@@ -55,6 +55,10 @@ if (!gotTheLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
+    
+    // Check for updates when awakened from web
+    autoUpdater.checkForUpdatesAndNotify();
+
     const deepLinkUrl = commandLine.find(arg => arg.startsWith('livooth://'));
     if (deepLinkUrl) {
       handleDeepLink(deepLinkUrl);
