@@ -25,7 +25,6 @@ export default function Store({ apiKey, language }: StoreProps) {
   const tF2p = isKo ? '무료 플레이' : isId ? 'MAIN GRATIS' : 'FREE TO PLAY';
   const tPremium = isKo ? '프리미엄' : isId ? 'PREMIUM' : 'PREMIUM';
   const tNoDesc = isKo ? '이 게임에 대한 설명이 없습니다.' : isId ? 'Tidak ada deskripsi yang tersedia.' : 'No description available for this awesome game.';
-  const tBrowser = isKo ? '브라우저에서 실행' : isId ? 'Main di Browser' : 'Get in Browser';
   const tPurchase = isKo ? '구매하기' : isId ? 'Beli' : 'Purchase';
 
   const formatCurrency = (amountInKrw: number) => {
