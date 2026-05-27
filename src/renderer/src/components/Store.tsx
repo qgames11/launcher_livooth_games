@@ -187,13 +187,22 @@ export default function Store({ apiKey, language }: StoreProps) {
                       </span>
                     </div>
                     
-                    <button
-                      onClick={() => handlePurchase(game.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
-                    >
-                      <span>{game.price === 0 || game.price === null ? tBrowser : tPurchase}</span>
-                      <ExternalLink size={14} />
-                    </button>
+                    {game.isOwned ? (
+                      <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-400 rounded-xl text-sm font-bold shadow-none cursor-not-allowed"
+                      >
+                        <span>{isKo ? '라이브러리에 있음' : isId ? 'Di Pustaka' : 'In Library'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handlePurchase(game.id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
+                      >
+                        <span>{tPurchase}</span>
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
