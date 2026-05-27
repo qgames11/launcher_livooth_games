@@ -180,7 +180,7 @@ export default function MainLayout({ apiKey, userName, isSubscribed, trueApiKey,
         <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[600px] h-[500px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none"></div>
         
-        {activeTab === 'store' ? <Store apiKey={apiKey} language={language} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded language={language} isSubscribed={isSubscribed} />}
+        {activeTab === 'store' ? <Store apiKey={apiKey} language={language} isUpdatePending={!!updateMsg} /> : <Library apiKey={apiKey} userName={userName} onLogout={onLogout} isEmbedded language={language} isSubscribed={isSubscribed} isUpdatePending={!!updateMsg} />}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
@@ -9,6 +9,7 @@ import axios from 'axios'
 import extract from 'extract-zip'
 
 let mainWindow: BrowserWindow | null = null;
+let isUpdatePending = false;
 
 // Handle Deep Link
 function handleDeepLink(urlStr: string) {
@@ -26,6 +27,11 @@ function handleDeepLink(urlStr: string) {
       const name = parsedUrl.searchParams.get('name') || 'Livooth User';
 
       if (mainWindow) {
+        if (isUpdatePending) {
+          dialog.showErrorBox('업데이트 필요', '런처 업데이트가 진행 중이거나 대기 중입니다. 업데이트 완료 후 게임을 실행해주세요.');
+          return;
+        }
+
         if (apiKey) {
           mainWindow.webContents.send('launcher-login', { apiKey, name });
           if (gameId) {
@@ -144,6 +150,7 @@ app.whenReady().then(() => {
   ipcMain.handle('get-app-version', () => app.getVersion());
 
   autoUpdater.on('update-available', () => {
+    isUpdatePending = true;
     if (mainWindow) mainWindow.webContents.send('update-status', 'Update Available! Downloading...');
   });
   
@@ -152,6 +159,7 @@ app.whenReady().then(() => {
   });
   
   autoUpdater.on('update-downloaded', async () => {
+    isUpdatePending = true;
     if (mainWindow) mainWindow.webContents.send('update-status', 'Update Ready!');
   });
   
@@ -162,6 +170,13 @@ app.whenReady().then(() => {
   // Secure Game Launcher IPC
   ipcMain.on('launch-game', (event: any, args: any) => {
     const { gameId, apiKey } = args;
+    
+    if (isUpdatePending) {
+      dialog.showErrorBox('업데이트 필요', '런처 업데이트가 진행 중이거나 대기 중입니다. 업데이트 완료 후 게임을 실행해주세요.');
+      event.sender.send('launch-error', { gameId, error: '런처 업데이트가 필요합니다.' });
+      return;
+    }
+
     console.log(`Launching game ${gameId} with key ${apiKey}`);
     
     try {
@@ -220,6 +235,13 @@ app.whenReady().then(() => {
   // Launch Web Game IPC
   ipcMain.on('launch-web-game', (event: any, args: any) => {
     const { gameId, url, apiKey } = args;
+    
+    if (isUpdatePending) {
+      dialog.showErrorBox('업데이트 필요', '런처 업데이트가 진행 중이거나 대기 중입니다. 업데이트 완료 후 게임을 실행해주세요.');
+      event.sender.send('launch-error', { gameId, error: '런처 업데이트가 필요합니다.' });
+      return;
+    }
+
     console.log(`Launching web game ${gameId} with key ${apiKey}`);
     
     try {

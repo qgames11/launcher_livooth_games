@@ -6,9 +6,10 @@ import { Language } from '../App';
 interface StoreProps {
   apiKey: string;
   language: Language;
+  isUpdatePending?: boolean;
 }
 
-export default function Store({ apiKey, language }: StoreProps) {
+export default function Store({ apiKey, language, isUpdatePending = false }: StoreProps) {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,10 +197,11 @@ export default function Store({ apiKey, language }: StoreProps) {
                     ) : (
                       <button
                         onClick={() => handlePurchase(game.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
+                        disabled={isUpdatePending}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg ${isUpdatePending ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white hover:shadow-blue-500/25 active:scale-95'}`}
                       >
-                        <span>{tPurchase}</span>
-                        <ExternalLink size={14} />
+                        <span>{isUpdatePending ? (isKo ? '업데이트 필요' : 'Update Required') : tPurchase}</span>
+                        {!isUpdatePending && <ExternalLink size={14} />}
                       </button>
                     )}
                   </div>

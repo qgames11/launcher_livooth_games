@@ -20,11 +20,12 @@ interface LibraryProps {
   isEmbedded?: boolean;
   language?: Language;
   isSubscribed?: boolean;
+  isUpdatePending?: boolean;
 }
 
 // Removed mockGames. Games will be fetched from the backend.
 
-export default function Library({ apiKey, userName, onLogout, isEmbedded, language = 'ko', isSubscribed = false }: LibraryProps) {
+export default function Library({ apiKey, userName, onLogout, isEmbedded, language = 'ko', isSubscribed = false, isUpdatePending = false }: LibraryProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -153,6 +154,10 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded, langua
       }
 
     } else if (action === 'play') {
+      if (isUpdatePending) {
+         alert(isKo ? '런처 업데이트가 진행 중이거나 대기 중입니다. 업데이트를 먼저 완료해주세요.' : isId ? 'Pembaruan sedang berlangsung atau menunggu. Silakan selesaikan pembaruan terlebih dahulu.' : 'Launcher update is pending. Please complete the update first.');
+         return;
+      }
       if (type === 'web') {
         window.electron.ipcRenderer.send('launch-web-game', { gameId, url, apiKey });
       } else {
@@ -252,16 +257,18 @@ export default function Library({ apiKey, userName, onLogout, isEmbedded, langua
                      isSubscribed ? (
                         <button 
                           onClick={() => handleAction(game.id, 'play', game.type, game.url)}
-                          className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-blue-600/20"
+                          disabled={isUpdatePending}
+                          className={`w-full py-2 font-semibold rounded-lg transition-colors shadow-lg ${isUpdatePending ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'}`}
                         >
-                          {tPlay}
+                          {isUpdatePending ? (isKo ? '업데이트 필요' : 'Update Required') : tPlay}
                         </button>
                      ) : (
                         <button 
                           onClick={() => window.open('https://livoothgames.com', '_blank')}
-                          className="w-full py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 group"
+                          disabled={isUpdatePending}
+                          className={`w-full py-2 font-bold rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 group ${isUpdatePending ? 'bg-gray-800 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-purple-500/20'}`}
                         >
-                          <span className="text-base group-hover:rotate-12 transition-transform">👑</span> {isKo ? '구독 필요' : isId ? 'Butuh Langganan' : 'Subscribe to Play'}
+                          <span className="text-base group-hover:rotate-12 transition-transform">👑</span> {isUpdatePending ? (isKo ? '업데이트 필요' : 'Update Required') : (isKo ? '구독 필요' : isId ? 'Butuh Langganan' : 'Subscribe to Play')}
                         </button>
                      )
                   ) : game.status === 'uninstalled' ? (
