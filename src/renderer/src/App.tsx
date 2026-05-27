@@ -11,6 +11,13 @@ function App(): React.JSX.Element {
   const [trueApiKey, setTrueApiKey] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>('ko');
 
+  const handleLogin = (key: string, name: string) => {
+    setApiKey(key);
+    setUserName(name);
+    localStorage.setItem('livooth-api-key', key);
+    localStorage.setItem('livooth-user-name', name);
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('livooth-lang') as Language;
     if (saved === 'ko' || saved === 'en' || saved === 'id') {
@@ -20,6 +27,17 @@ function App(): React.JSX.Element {
       const isKo = navigator.language.startsWith('ko');
       setLanguage(isKo ? 'ko' : isId ? 'id' : 'en');
     }
+
+    // Global listener for deep link logins (switches user automatically)
+    const removeListener = window.electron.ipcRenderer.on('launcher-login', (_event, args) => {
+      if (args && args.apiKey) {
+        handleLogin(args.apiKey, args.name || 'Livooth User');
+      }
+    });
+
+    return () => {
+      removeListener();
+    };
   }, []);
 
   useEffect(() => {
@@ -53,13 +71,6 @@ function App(): React.JSX.Element {
   const handleLangChange = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('livooth-lang', lang);
-  };
-
-  const handleLogin = (key: string, name: string) => {
-    setApiKey(key);
-    setUserName(name);
-    localStorage.setItem('livooth-api-key', key);
-    localStorage.setItem('livooth-user-name', name);
   };
 
   const handleLogout = () => {

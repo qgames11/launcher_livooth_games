@@ -121,6 +121,9 @@ app.whenReady().then(() => {
   const deepLinkUrl = process.argv.find(arg => arg.startsWith('livooth://'));
   if (deepLinkUrl) {
     setTimeout(() => handleDeepLink(deepLinkUrl), 1000); // Small delay to let renderer load
+  } else {
+    // Auto sync login if opened manually (not via web deep link)
+    shell.openExternal('https://livoothgames.com/launcher-login?source=desktop');
   }
 
   // Default open or close DevTools by F12 in development
